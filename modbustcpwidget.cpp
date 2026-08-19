@@ -3,6 +3,8 @@
 #include "modbusassistant.h"
 
 #include <QNetworkInterface>
+#include <QRegularExpression>
+#include <QRegularExpressionValidator>
 #include <QtAlgorithms>
 
 ModbusTcpWidget::ModbusTcpWidget(QWidget *parent) :
@@ -11,32 +13,9 @@ ModbusTcpWidget::ModbusTcpWidget(QWidget *parent) :
 {
     ui->setupUi(this);
     ui->comboBox_IPAddr->setEditable(true);
-    ui->comboBox_IPAddr->clear();
-
-    const QList<QNetworkInterface> interfaces = QNetworkInterface::allInterfaces();
-    for (const QNetworkInterface &iface : interfaces) {
-        // Get all IP address entries on this interface
-        const QList<QNetworkAddressEntry> entries = iface.addressEntries();
-        for (const QNetworkAddressEntry &entry : entries) {
-            const QHostAddress ip = entry.ip();
-            if (ip.protocol() == QAbstractSocket::IPv4Protocol) {
-                // Add IPv4 addresses to the ComboBox
-                ui->comboBox_IPAddr->addItem(ip.toString());
-            }
-        }
-    }
-
-    // qSort() is deprecated since Qt 5.15; use std::sort()
-    // Use std::sort() on Qt 5.15+
-
-    // Create a regular expression matching port numbers
-    QRegularExpression re(QStringLiteral("^([1-9]|[1-9]\\d{1,3}|[1-5]\\d{4}|6[0-4]\\d{3}|65[0-4]\\d{2}|655[0-2]\\d|6553[0-5])$"));
-    // Create a QRegularExpressionValidator to restrict input
-    QRegularExpressionValidator *validator = new QRegularExpressionValidator(re, this);
-    // Set the validator on the QLineEdit
-    ui->lineEdit_Port->setValidator(validator);
-
-    connect(ui->btn_clear_log, &QPushButton::clicked, this, &ModbusTcpWidget::sig_clear_log_requested);
+    setIPAddr();
+    setPort();
+    set_gateway_mode(GatewayMode::TcpToRtu);
 }
 
 ModbusTcpWidget::~ModbusTcpWidget()
@@ -44,15 +23,44 @@ ModbusTcpWidget::~ModbusTcpWidget()
     delete ui;
 }
 
-void ModbusTcpWidget::set_gateway_mode(GatewayMode mode)
+void ModbusTcpWidget::on_btn_clear_log_clicked()
 {
-    if (mode == GatewayMode::RtuToTcp) {
-        ui->label_IPAddr->setText(tr("Target IP:"));
-        ui->label_Port->setText(tr("Target Port:"));
-    } else {
-        ui->label_IPAddr->setText(tr("Listen IP:"));
-        ui->label_Port->setText(tr("Listen Port:"));
+    emit sig_clear_log_requested();
+}
+
+void ModbusTcpWidget::setIPAddr()
+{
+    QList<QString> ipv4Addresses;
+    foreach (QNetworkInterface interface, QNetworkInterface::allInterfaces())
+    {
+        // Get all IP address entries on this interface
+        foreach (QNetworkAddressEntry entry, interface.addressEntries()) {
+            if (entry.ip().protocol() == QAbstractSocket::IPv4Protocol) {
+                // Add IPv4 addresses to the ComboBox
+                ipv4Addresses.append(entry.ip().toString());
+            }
+        }
     }
+
+#if (QT_VERSION < QT_VERSION_CHECK(5, 15, 0))
+    qSort(ipv4Addresses);
+#else
+    std::sort(ipv4Addresses.begin(), ipv4Addresses.end());
+#endif
+    ui->comboBox_IPAddr->clear();
+    foreach (QString ipv4Address, ipv4Addresses) {
+        ui->comboBox_IPAddr->addItem(ipv4Address);
+    }
+}
+
+void ModbusTcpWidget::setPort()
+{
+    // Create a regular expression matching port numbers
+    QRegularExpression regex(ModbusAssistant::m_regExp4PortNumber);
+    // Create a QRegularExpressionValidator to restrict input
+    QRegularExpressionValidator *validator = new QRegularExpressionValidator(regex, this);
+    // Set the validator on the QLineEdit
+    ui->lineEdit_Port->setValidator(validator);
 }
 
 QStringList ModbusTcpWidget::get_params() const
@@ -61,4 +69,16 @@ QStringList ModbusTcpWidget::get_params() const
     params << ui->comboBox_IPAddr->currentText()
            << ui->lineEdit_Port->text();
     return params;
+}
+
+void ModbusTcpWidget::set_gateway_mode(GatewayMode mode)
+{
+    if(mode == GatewayMode::RtuToTcp){
+        ui->label_IPAddr->setText(tr("Target IP:"));
+        ui->label_Port->setText(tr("Target Port:"));
+        return;
+    }
+
+    ui->label_IPAddr->setText(tr("Listen IP:"));
+    ui->label_Port->setText(tr("Listen Port:"));
 }

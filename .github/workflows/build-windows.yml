@@ -29,9 +29,10 @@ jobs:
       - name: Build
         shell: cmd
         run: |
-          call "%IQTA_TOOLS%\\mingw1310_64\\bin\\qtenv2.bat"
+          set PATH=%QT_ROOT_DIR%\bin;%IQTA_TOOLS%\mingw1310_64\bin;%PATH%
           where qmake
           where mingw32-make
+          where g++
           qmake ModbusGateway.pro CONFIG+=release
           mingw32-make -j%NUMBER_OF_PROCESSORS%
 
@@ -58,10 +59,14 @@ jobs:
           mkdir -p dist/ModbusGateway
           cp "$EXE" dist/ModbusGateway/
           windeployqt --release --compiler-runtime "dist/ModbusGateway/ModbusGateway.exe"
-          # Also copy any extra DLLs next to the built exe if present
           if [ -d "$DIR" ]; then
             find "$DIR" -maxdepth 1 -name '*.dll' -exec cp {} dist/ModbusGateway/ \; || true
           fi
+          # MinGW runtime often needed
+          for dll in libgcc_s_seh-1.dll libstdc++-6.dll libwinpthread-1.dll; do
+            SRC=$(find "$IQTA_TOOLS" -name "$dll" 2>/dev/null | head -n 1)
+            if [ -n "$SRC" ]; then cp "$SRC" dist/ModbusGateway/; fi
+          done
           ls -la dist/ModbusGateway
 
       - name: Zip package
