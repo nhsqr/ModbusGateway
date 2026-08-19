@@ -41,7 +41,7 @@ MainWindow::MainWindow(QWidget *parent)
         }
     });
 
-    label_status = new QLabel("等待上位机 TCP 连接", this);
+    label_status = new QLabel("Waiting for TCP master connection", this);
     ui->statusbar->addWidget(label_status);
 
     update_gateway_mode_ui();
@@ -74,7 +74,7 @@ void MainWindow::on_btn_run_clicked()
         ((tcp_worker == nullptr) != (rtu_worker == nullptr))){
         stop_workers();
         set_config_widgets_enabled(true);
-        ui->btn_run->setText("运行");
+        ui->btn_run->setText("Start");
         label_status->setText(idle_status_text());
         return;
     }
@@ -82,18 +82,18 @@ void MainWindow::on_btn_run_clicked()
     if(rtu_worker || tcp_worker){
         stop_workers();
         set_config_widgets_enabled(true);
-        ui->btn_run->setText("运行");
+        ui->btn_run->setText("Start");
         label_status->setText(idle_status_text());
         return;
     }
 
     if(start_workers()){
         set_config_widgets_enabled(false);
-        ui->btn_run->setText("停止");
+        ui->btn_run->setText("Stop");
     }else{
         stop_workers();
         set_config_widgets_enabled(true);
-        ui->btn_run->setText("运行");
+        ui->btn_run->setText("Start");
     }
 }
 
@@ -204,7 +204,7 @@ bool MainWindow::start_workers()
         }
     }
 
-    label_status->setText(mode == GatewayMode::TcpToRtu ? "等待上位机 TCP 连接" : "已连接下位机 TCP");
+    label_status->setText(mode == GatewayMode::TcpToRtu ? "Waiting for TCP master connection" : "Connected to TCP slave");
     return true;
 }
 
@@ -215,7 +215,7 @@ GatewayMode MainWindow::current_gateway_mode() const
 
 QString MainWindow::idle_status_text() const
 {
-    return current_gateway_mode() == GatewayMode::TcpToRtu ? "等待上位机 TCP 连接" : "准备连接下位机 TCP";
+    return current_gateway_mode() == GatewayMode::TcpToRtu ? "Waiting for TCP master connection" : "Ready to connect to TCP slave";
 }
 
 void MainWindow::update_gateway_mode_ui()
@@ -223,8 +223,8 @@ void MainWindow::update_gateway_mode_ui()
     const GatewayMode mode = current_gateway_mode();
     mbtcp_wdgt->set_gateway_mode(mode);
     this->setWindowTitle(mode == GatewayMode::TcpToRtu
-                             ? QString("上位机 TCP -> 下位机 RTU - ModbusGateway")
-                             : QString("上位机 RTU -> 下位机 TCP - ModbusGateway"));
+                             ? QString("TCP Master -> RTU Slave - ModbusGateway")
+                             : QString("RTU Master -> TCP Slave - ModbusGateway"));
 }
 
 void MainWindow::setup_log_list(QListWidget* list_widget)
