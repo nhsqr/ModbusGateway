@@ -1,0 +1,85 @@
+name: Build Windows
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+  workflow_dispatch:
+  release:
+    types: [published]
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Qt
+        uses: jurplel/install-qt-action@v4
+        with:
+          version: "6.8.3"
+          host: windows
+          target: desktop
+          arch: win64_mingw
+          modules: qtserialport
+          tools: tools_mingw1310
+          cache: true
+
+      - name: Build
+        shell: cmd
+        run: |
+          call "%IQTA_TOOLS%\\mingw1310_64\\bin\\qtenv2.bat"
+          where qmake
+          where mingw32-make
+          qmake ModbusGateway.pro CONFIG+=release
+          mingw32-make -j%NUMBER_OF_PROCESSORS%
+
+      - name: Find executable
+        id: find_exe
+        shell: bash
+        run: |
+          EXE=$(find . -name 'ModbusGateway.exe' -type f | head -n 1)
+          echo "Found: $EXE"
+          if [ -z "$EXE" ]; then
+            echo "ModbusGateway.exe not found"
+            find . -name '*.exe' -type f || true
+            exit 1
+          fi
+          DIR=$(dirname "$EXE")
+          echo "exe=$EXE" >> "$GITHUB_OUTPUT"
+          echo "dir=$DIR" >> "$GITHUB_OUTPUT"
+
+      - name: Deploy portable package
+        shell: bash
+        run: |
+          EXE="${{ steps.find_exe.outputs.exe }}"
+          DIR="${{ steps.find_exe.outputs.dir }}"
+          mkdir -p dist/ModbusGateway
+          cp "$EXE" dist/ModbusGateway/
+          windeployqt --release --compiler-runtime "dist/ModbusGateway/ModbusGateway.exe"
+          # Also copy any extra DLLs next to the built exe if present
+          if [ -d "$DIR" ]; then
+            find "$DIR" -maxdepth 1 -name '*.dll' -exec cp {} dist/ModbusGateway/ \; || true
+          fi
+          ls -la dist/ModbusGateway
+
+      - name: Zip package
+        shell: bash
+        run: |
+          cd dist
+          7z a -tzip ModbusGateway-windows-x64.zip ModbusGateway
+          ls -la ModbusGateway-windows-x64.zip
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ModbusGateway-windows-x64
+          path: dist/ModbusGateway-windows-x64.zip
+          if-no-files-found: error
+
+      - name: Attach to GitHub Release
+        if: github.event_name == 'release'
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/ModbusGateway-windows-x64.zip
