@@ -1,1 +1,75 @@
-# ModbusGateway (English)\n\nEnglish fork of [louisir/ModbusGateway](https://github.com/louisir/ModbusGateway) with full English UI.\n\nModbusGateway is a Qt-based Modbus software gateway for forwarding requests and responses between Modbus TCP and Modbus RTU. It supports both `TCP Master → RTU Slave` and `RTU Master → TCP Slave` modes, with GUI settings for the serial port, TCP listen/target address, and real-time TCP/RTU frame logs.\n\n## Features\n\n- **TCP Master → RTU Slave**: Modbus TCP masters access Modbus RTU slave devices over a serial/USB-RS485 adapter.\n- **RTU Master → TCP Slave**: Modbus RTU masters access a Modbus TCP slave.\n- TCP frame parsing based on the MBAP length field (handles fragmentation and coalescing).\n- Automatic Modbus RTU CRC16 append and validation.\n- Serialized RTU request queue (prevents concurrent access to the same RS-485 bus).\n- Supported function codes: 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x0F, 0x10.\n- Modbus exception responses and gateway timeout exceptions (fixed 2000 ms).\n- Real-time hex logs for both TCP and RTU sides.\n\n## Requirements\n\n- Qt 5.15 or Qt 6.x\n- Modules: Core, Gui, Widgets, Network, SerialPort\n- C++17 compiler (MinGW or MSVC on Windows)\n\n## Build (Windows)\n\n### Option A – Qt Creator (easiest)\n\n1. Install [Qt](https://www.qt.io/download) (open-source) with **MinGW** and the **SerialPort** module.\n2. Open `ModbusGateway.pro` in Qt Creator.\n3. Select a kit that includes Qt SerialPort.\n4. Click **Build** → **Run**.\n\n### Option B – Command line (MinGW)\n\n```powershell\n# Adjust path to your Qt installation\n$env:PATH = \"C:\\Qt\\6.8.3\\mingw_64\\bin;C:\\Qt\\Tools\\mingw1310_64\\bin;\" + $env:PATH\n\nqmake ModbusGateway.pro\nmingw32-make -j4\n```\n\nThe executable will be in the build directory (often `release\\ModbusGateway.exe` or next to the project depending on shadow build settings).\n\n### Create a portable package\n\n```powershell\nwindeployqt --release release\\ModbusGateway.exe\n```\n\nCopy the resulting folder (exe + Qt DLLs) anywhere.\n\n## Usage\n\n1. Start the application.\n2. Select mode:\n   - **TCP Master → RTU Slave** (most common for USB-RS485 sticks)\n   - **RTU Master → TCP Slave**\n3. Configure serial port (COM port of your USB-RS485 adapter), baud rate, parity, etc.\n4. Set TCP IP and port (default `0.0.0.0` / `502` for listening).\n5. Click **Start**.\n6. Connect your Modbus TCP client (Node-RED, SCADA, QModMaster, …) to `127.0.0.1:502`.\n\n## Limitations\n\n- Only one TCP client is accepted at a time in TCP→RTU mode.\n- Response timeout is fixed at 2000 ms.\n- Broadcast address 0 is not forwarded in RTU→TCP mode.\n\n## Original project\n\nUpstream: https://github.com/louisir/ModbusGateway  \nThis fork only changes the UI language to English and keeps the same license and functionality.\n\n## License\n\nSee [LICENSE](LICENSE).\n
+# ModbusGateway (English)
+
+English fork of [louisir/ModbusGateway](https://github.com/louisir/ModbusGateway) with full English UI.
+
+ModbusGateway is a Qt-based Modbus software gateway for forwarding requests and responses between Modbus TCP and Modbus RTU. It supports both `TCP Master → RTU Slave` and `RTU Master → TCP Slave` modes, with GUI settings for the serial port, TCP listen/target address, and real-time TCP/RTU frame logs.
+
+## Features
+
+- **TCP Master → RTU Slave**: Modbus TCP masters access Modbus RTU slave devices over a serial/USB-RS485 adapter.
+- **RTU Master → TCP Slave**: Modbus RTU masters access a Modbus TCP slave.
+- TCP frame parsing based on the MBAP length field (handles fragmentation and coalescing).
+- Automatic Modbus RTU CRC16 append and validation.
+- Serialized RTU request queue (prevents concurrent access to the same RS-485 bus).
+- Supported function codes: 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x0F, 0x10.
+- Modbus exception responses and gateway timeout exceptions (fixed 2000 ms).
+- Real-time hex logs for both TCP and RTU sides.
+
+## Requirements
+
+- Qt 5.15 or Qt 6.x
+- Modules: Core, Gui, Widgets, Network, SerialPort
+- C++17 compiler (MinGW or MSVC on Windows)
+
+## Build (Windows)
+
+### Option A – Qt Creator (easiest)
+
+1. Install [Qt](https://www.qt.io/download) (open-source) with **MinGW** and the **SerialPort** module.
+2. Open `ModbusGateway.pro` in Qt Creator.
+3. Select a kit that includes Qt SerialPort.
+4. Click **Build** → **Run**.
+
+### Option B – Command line (MinGW)
+
+```powershell
+# Adjust path to your Qt installation
+$env:PATH = "C:\\Qt\\6.8.3\\mingw_64\\bin;C:\\Qt\\Tools\\mingw1310_64\\bin;" + $env:PATH
+
+qmake ModbusGateway.pro
+mingw32-make -j4
+```
+
+The executable will be in the build directory (often `release\\ModbusGateway.exe`).
+
+### Create a portable package
+
+```powershell
+windeployqt --release release\\ModbusGateway.exe
+```
+
+## Usage
+
+1. Start the application.
+2. Select mode:
+   - **TCP Master → RTU Slave** (most common for USB-RS485 sticks)
+   - **RTU Master → TCP Slave**
+3. Configure serial port (COM port of your USB-RS485 adapter), baud rate, parity, etc.
+4. Set TCP IP and port (default listen on port `502`).
+5. Click **Start**.
+6. Connect your Modbus TCP client (Node-RED, SCADA, QModMaster, …) to `127.0.0.1:502`.
+
+## Limitations
+
+- Only one TCP client is accepted at a time in TCP→RTU mode.
+- Response timeout is fixed at 2000 ms.
+- Broadcast address 0 is not forwarded in RTU→TCP mode.
+
+## Original project
+
+Upstream: https://github.com/louisir/ModbusGateway  
+This fork changes the UI language to English and keeps the same license and functionality.
+
+## License
+
+See [LICENSE](LICENSE).
