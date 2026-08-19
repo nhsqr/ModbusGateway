@@ -8,6 +8,9 @@ on:
   release:
     types: [published]
 
+permissions:
+  contents: write
+
 jobs:
   build:
     runs-on: windows-latest
@@ -62,7 +65,6 @@ jobs:
           if [ -d "$DIR" ]; then
             find "$DIR" -maxdepth 1 -name '*.dll' -exec cp {} dist/ModbusGateway/ \; || true
           fi
-          # MinGW runtime often needed
           for dll in libgcc_s_seh-1.dll libstdc++-6.dll libwinpthread-1.dll; do
             SRC=$(find "$IQTA_TOOLS" -name "$dll" 2>/dev/null | head -n 1)
             if [ -n "$SRC" ]; then cp "$SRC" dist/ModbusGateway/; fi
@@ -88,3 +90,6 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           files: dist/ModbusGateway-windows-x64.zip
+          fail_on_unmatched_files: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
